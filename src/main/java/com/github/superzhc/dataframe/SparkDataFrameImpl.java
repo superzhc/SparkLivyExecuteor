@@ -1,6 +1,6 @@
 package com.github.superzhc.dataframe;
 
-import com.github.superzhc.AbstractSparkSession;
+import com.github.superzhc.livy.AbstractSparkSession;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
@@ -154,7 +154,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         df.write().mode(saveMode).jdbc(url, tableName, props);
     }
 
-    public String getDfKey() {
+    @Override public String key() {
         return dfKey;
     }
 }

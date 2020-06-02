@@ -1,4 +1,4 @@
-package com.github.superzhc;
+package com.github.superzhc.livy;
 
 import org.apache.spark.sql.SparkSession;
 

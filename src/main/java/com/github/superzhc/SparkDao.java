@@ -45,4 +45,12 @@ public class SparkDao
         SparkDataFrameImpl sparkDataFrame = new SparkDataFrameImpl(dfKey, alias);
         return (SparkDataFrame) SparkLivyProxy.newProxyInstance(client, sparkDataFrame);
     }
+
+    /**
+     * 获取Livy的SessionId
+     * @return
+     */
+    public Integer getId() {
+        return id;
+    }
 }

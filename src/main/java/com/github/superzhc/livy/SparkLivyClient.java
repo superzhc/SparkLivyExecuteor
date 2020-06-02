@@ -25,7 +25,7 @@ public class SparkLivyClient
         _livyUrl = System.getProperty("livy.url");
         logger.debug("livy.url:[{}]", _livyUrl);
         _jars = System.getProperty("livy.job.jars");
-        logger.debug("livy.job.jar:[{}]", _jars);
+        logger.debug("livy.job.jars:[{}]", _jars);
     }
 
     private LivyClient client;

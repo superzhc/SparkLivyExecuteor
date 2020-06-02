@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.github.superzhc.livy.AbstractSparkSession;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
@@ -50,6 +51,7 @@ public class SparkOperateImpl extends AbstractSparkSession implements SparkOpera
     @Override
     public String hive(String sql) {
         Dataset<Row> df = spark.sql(sql);
+        System.out.println("分区数："+df.toJavaRDD().partitions().size());
         // 修复：Dataset并不能作为返回值返回，返回一个唯一标识
         // return df;
         return SparkDataFrameMapping.getInstance().set(df);

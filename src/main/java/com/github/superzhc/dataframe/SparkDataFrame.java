@@ -1,5 +1,6 @@
 package com.github.superzhc.dataframe;
 
+import com.github.superzhc.livy.SparkLivyLocal;
 import org.apache.spark.sql.Row;
 
 import java.util.List;
@@ -35,4 +36,7 @@ public interface SparkDataFrame
     public List<Row> takeAsList(Integer n);
 
     public Row first();
+
+    @SparkLivyLocal
+    String key();
 }
