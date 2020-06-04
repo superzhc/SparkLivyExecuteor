@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.github.superzhc.livy.AbstractSparkSession;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
@@ -17,6 +16,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 import com.github.superzhc.dataframe.SparkDataFrameMapping;
+import com.github.superzhc.livy.AbstractSparkSession;
 
 /**
  * 2020年06月01日 superz add
@@ -30,9 +30,32 @@ public class SparkOperateImpl extends AbstractSparkSession implements SparkOpera
 
     @Override
     public String jdbc(String url, String sql, Properties props) {
-        Dataset<Row> df = spark.read().format("jdbc").option("url", url).option("dbtable", sql).load();
+        /*
+        // 2020年6月4日 用户传递配置来实现分区的示例
+        props.put("partitionColumn", "id");// 分区列，列为整数类型和时间
+        props.put("lowerBound", "1");// 下限
+        props.put("upperBound", "123456789");// 上限
+        props.put("numPartitions", "50");// 分区数
+        */
+        Dataset<Row> df = spark.read().jdbc(url, sql, props);
         // 修复：Dataset并不能作为返回值返回，返回一个唯一标识
         // return df;
+        return SparkDataFrameMapping.getInstance().set(df);
+    }
+
+    /**
+     * 根据任意字段进行分区
+     * @param url
+     * @param sql
+     * @param predicates
+     * @param props
+     * @return
+     */
+    @Override
+    public String jdbc(String url, String sql, String[] predicates, Properties props) {
+        // 谓词设置
+        // predicates = new String[] {"reportDate<'2020-01-01'", "reportDate>='2020-01-01'" };
+        Dataset<Row> df = spark.read().jdbc(url, sql, predicates, props);
         return SparkDataFrameMapping.getInstance().set(df);
     }
 
@@ -50,13 +73,56 @@ public class SparkOperateImpl extends AbstractSparkSession implements SparkOpera
 
     @Override
     public String hive(String sql) {
-        Dataset<Row> df = spark.sql(sql);
-        System.out.println("分区数："+df.toJavaRDD().partitions().size());
+        Dataset<Row> df =spark.sql(sql);
         // 修复：Dataset并不能作为返回值返回，返回一个唯一标识
         // return df;
         return SparkDataFrameMapping.getInstance().set(df);
     }
 
+    /**
+     * 读取json文件
+     * @param paths
+     * @return
+     */
+    public String json(String... paths){
+        Dataset<Row> df=spark.read().json(paths);
+        return SparkDataFrameMapping.getInstance().set(df);
+    }
+
+    public String parquet(String... paths) {
+        Dataset<Row> df = spark.read().load(paths);
+        return SparkDataFrameMapping.getInstance().set(df);
+    }
+
+    public String csv(String... paths) {
+        return csv(false, paths);
+    }
+
+    public String csv(boolean header, String... paths) {
+        Dataset<Row> df = spark.read().option("header", true).csv(paths);
+        return SparkDataFrameMapping.getInstance().set(df);
+    }
+
+    public String hbase(String zookeeper,Integer port,String tableName){
+        // 原生的方式
+//        Configuration config= HBaseConfiguration.create();
+//        config.set("hbase.zookeeper.quorum", zookeeper);
+//        config.set("hbase.zookeeper.property.clientPort", String.valueOf(port));
+//        config.set("hbase.mapreduce.inputtable",tableName);
+//        JavaRDD rdd=spark.sparkContext().newAPIHadoopRDD(config,TableInputFormat.class, ImmutableBytesWritable.class, Result.class);
+
+        //TODO
+
+        throw new RuntimeException("该方法尚未实现");
+    }
+
+    /**
+     * 方法的实现不是很好
+     * @param path
+     * @param split
+     * @param fields
+     * @return
+     */
     public String textFile(String path, final String split, Map<String, String> fields) {
         JavaRDD<String> rdd = spark.read().textFile(path).toJavaRDD();
         JavaRDD<Row> rdd1 = rdd.map(new Function<String, Row>()

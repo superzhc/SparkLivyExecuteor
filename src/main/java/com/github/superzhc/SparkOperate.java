@@ -16,7 +16,15 @@ public interface SparkOperate
 
     public String jdbc(String url, String username, String password, String sql, Properties props);
 
+    String jdbc(String url, String sql, String[] predicates, Properties props);
+
     public String hive(String sql);
 
-    public String textFile(String path, final String split, Map<String, String> fields);
+    String json(String... paths);
+
+    String parquet(String... paths);
+
+    String csv(String... paths);
+
+    String csv(boolean header, String... paths);
 }

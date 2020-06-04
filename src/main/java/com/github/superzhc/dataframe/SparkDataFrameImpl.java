@@ -24,6 +24,10 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         this.tableName = tableName;
     }
 
+    private Dataset<Row> dataFrame(){
+        return SparkDataFrameMapping.getInstance().get(dfKey);
+    }
+
     /**
      * 从老的DataFrameWrapper创建新的DataFrameWrapper，表名延用
      * @param dfKey
@@ -37,11 +41,11 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      * 以树的形式打印数据的结构信息
      */
     public void printSchema() {
-        SparkDataFrameMapping.getInstance().get(dfKey).printSchema();
+        dataFrame().printSchema();
     }
 
     public SparkDataFrame execute(String sql) {
-        Dataset<Row> dataFrame = SparkDataFrameMapping.getInstance().get(dfKey);
+        Dataset<Row> dataFrame = dataFrame();
         try {
             dataFrame.createOrReplaceTempView(tableName);
         }
@@ -58,7 +62,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         if (null == columns || columns.length == 0)
             return null;
 
-        Dataset<Row> df = SparkDataFrameMapping.getInstance().get(dfKey);
+        Dataset<Row> df = dataFrame();
         df = df.select(columns[0], Arrays.copyOfRange(columns, 1, columns.length - 1));
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey);
@@ -69,7 +73,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      * @return
      */
     public long count() {
-        return SparkDataFrameMapping.getInstance().get(dfKey).count();
+        return dataFrame().count();
     }
 
     public void show() {
@@ -80,8 +84,8 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      * 预览打印部分数据
      * @param numRows
      */
-    public void show(Integer numRows) {
-        SparkDataFrameMapping.getInstance().get(dfKey).show(numRows);
+    public void show(int numRows) {
+        dataFrame().show(numRows);
     }
 
     /**
@@ -90,7 +94,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      * @return
      */
     public Row[] collect() {
-        return (Row[]) SparkDataFrameMapping.getInstance().get(dfKey).collect();
+        return (Row[]) dataFrame().collect();
     }
 
     /**
@@ -114,8 +118,8 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      * @param n
      * @return
      */
-    public Row[] take(Integer n) {
-        return (Row[]) SparkDataFrameMapping.getInstance().get(dfKey).take(n);
+    public Row[] take(int n) {
+        return (Row[]) dataFrame().take(n);
     }
 
     /**
@@ -123,7 +127,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      * @param n
      * @return
      */
-    public List<Row> takeAsList(Integer n) {
+    public List<Row> takeAsList(int n) {
         // 直接使用此方法，返回数据在Livy序列化调用java.util.Arrays$ArrayList.size报空指针，不使用Arrays.asList来进行操作了
         // return SparkDataFrameMapping.getInstance().get(dfKey).takeAsList(n);
         Row[] rows = take(n);
@@ -139,7 +143,11 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      * @return
      */
     public Row first() {
-        return SparkDataFrameMapping.getInstance().get(dfKey).first();
+        return dataFrame().first();
+    }
+
+    public void saveJdbc(String url, String tableName, Properties props){
+        saveJdbc(url,tableName,"error",props);
     }
 
     /**
@@ -147,11 +155,43 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      * @param url
      * @param tableName
      * @param saveMode save modes are 'overwrite', 'append', 'ignore', 'error'
+     *           SaveMode.ErrorIfExists(default)	“error”(default)	如果文件存在，则报错
+     *           SaveMode.Append	“append”	追加
+     *           SaveMode.Overwrite	“overwrite”	覆写
+     *           SaveMode.Ignore	“ignore”	数据存在，则忽略
      * @param props
      */
-    public void writeJdbc(String url, String tableName, String saveMode, Properties props) {
-        Dataset<Row> df = SparkDataFrameMapping.getInstance().get(dfKey);
+    public void saveJdbc(String url, String tableName, String saveMode, Properties props) {
+        Dataset<Row> df = dataFrame();
         df.write().mode(saveMode).jdbc(url, tableName, props);
+    }
+
+    @Override public void saveHive(String tableName) {
+        saveHive(tableName,"error");
+    }
+
+    public void saveHive(String tableName,String saveMode){
+        Dataset<Row> df=dataFrame();
+        df.write().mode(saveMode).saveAsTable(tableName);
+    }
+    
+    public void saveParquet(String path) {
+        Dataset<Row> df = dataFrame();
+        df.write().save(path);
+    }
+
+    public void saveCSV(String path) {
+        saveCSV(false, path);
+    }
+
+    public void saveCSV(boolean header, String path) {
+        Dataset<Row> df = dataFrame();
+        df.write().option("header", header).csv(path);
+    }
+    
+    public void saveJson(String path) {
+        Dataset<Row> df = dataFrame();
+        df.write().json(path);
     }
 
     @Override public String key() {
