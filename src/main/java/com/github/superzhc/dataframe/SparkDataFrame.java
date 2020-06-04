@@ -11,8 +11,7 @@ import java.util.Properties;
  */
 public interface SparkDataFrame
 {
-    @Deprecated
-    public void printSchema();
+    String printSchema();
 
     public SparkDataFrame execute(String sql);
 
@@ -21,12 +20,12 @@ public interface SparkDataFrame
     /**
      * 数据在Spark服务器上打印，若需要获取数据使用take方法来获取数据
      */
-    public void show();
+    public String show();
 
     /**
      * 数据在Spark服务器上打印，若需要获取数据使用take方法来获取数据
      */
-    public void show(int numRows);
+    public String show(int numRows);
 
     public Row[] collect();
 

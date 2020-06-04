@@ -103,8 +103,10 @@ public class SparkLivyClient
             String[] arr = path.split(";");
             for (String jar : arr) {
                 File file = new File(jar);
-                if (!file.exists())
+                if (!file.exists()) {
+                    logger.error("文件[{}]不存在", file.getName());
                     continue;
+                }
 
                 if (file.isDirectory()) {
                     File[] childFiles = file.listFiles(new FileFilter()

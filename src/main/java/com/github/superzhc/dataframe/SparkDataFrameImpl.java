@@ -40,8 +40,11 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
     /**
      * 以树的形式打印数据的结构信息
      */
-    public void printSchema() {
-        dataFrame().printSchema();
+    public String printSchema() {
+        // 查询源码的实现，服务器打印一份，本地返回一份
+        String s = dataFrame().schema().treeString();
+        System.out.println(s);
+        return tableName + s.substring(4);// 将DataFrame返回的根是root替换成SparkDataFrame的表名
     }
 
     public SparkDataFrame execute(String sql) {
@@ -76,16 +79,19 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         return dataFrame().count();
     }
 
-    public void show() {
-        show(20);// 默认显示20条数据
+    public String show() {
+        return show(20);// 默认显示20条数据
     }
 
     /**
      * 预览打印部分数据
      * @param numRows
      */
-    public void show(int numRows) {
-        dataFrame().show(numRows);
+    public String show(int numRows) {
+        // 查询源码的实现，服务器一份数据，本地一份数据
+        String s=dataFrame().showString(numRows,20);
+        System.out.println(s);
+        return s;
     }
 
     /**
@@ -174,7 +180,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         Dataset<Row> df=dataFrame();
         df.write().mode(saveMode).saveAsTable(tableName);
     }
-    
+
     public void saveParquet(String path) {
         Dataset<Row> df = dataFrame();
         df.write().save(path);
@@ -188,7 +194,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         Dataset<Row> df = dataFrame();
         df.write().option("header", header).csv(path);
     }
-    
+
     public void saveJson(String path) {
         Dataset<Row> df = dataFrame();
         df.write().json(path);
