@@ -15,9 +15,9 @@ import java.util.Properties;
 public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDataFrame
 {
     // private Dataset<Row> dataFrame;
-    private String dfKey;
+    private final String dfKey;
     /* 设置DataFrame的表名 */
-    private String tableName;
+    private final String tableName;
 
     public SparkDataFrameImpl(String dfKey, String tableName) {
         this.dfKey = dfKey;
@@ -33,7 +33,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      * @param dfKey
      * @return
      */
-    private SparkDataFrame create(String dfKey) {
+    private SparkDataFrame create(String dfKey,String tableName) {
         return new SparkDataFrameImpl(dfKey, tableName);
     }
 
@@ -48,6 +48,16 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
     }
 
     public SparkDataFrame execute(String sql) {
+        return execute(sql, tableName);
+    }
+
+    /**
+     * 执行的语句，并设置别名
+     * @param sql
+     * @param alias
+     * @return
+     */
+    public SparkDataFrame execute(String sql, String alias) {
         Dataset<Row> dataFrame = dataFrame();
         try {
             dataFrame.createOrReplaceTempView(tableName);
@@ -58,7 +68,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         }
         Dataset<Row> df = spark.sql(sql);
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
-        return create(dfKey);
+        return create(dfKey, alias);
     }
 
     public SparkDataFrame select(String... columns) {
@@ -68,7 +78,7 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         Dataset<Row> df = dataFrame();
         df = df.select(columns[0], Arrays.copyOfRange(columns, 1, columns.length - 1));
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
-        return create(dfKey);
+        return create(dfKey, tableName);
     }
 
     /**

@@ -15,6 +15,8 @@ public interface SparkDataFrame
 
     public SparkDataFrame execute(String sql);
 
+    SparkDataFrame execute(String sql, String alias);
+
     public long count();
 
     /**
