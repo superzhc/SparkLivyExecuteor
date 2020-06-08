@@ -7,7 +7,8 @@ import org.apache.spark.sql.SparkSession;
  */
 public class AbstractSparkSession
 {
-    protected SparkSession spark;
+    /* 2020年6月8日 该字段不进行序列化 */
+    transient protected SparkSession spark;
 
     public SparkSession getSpark() {
         return spark;

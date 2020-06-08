@@ -35,7 +35,7 @@ public class SparkDao
     public SparkDataFrame query(String sql, String alias) {
         SparkOperateImpl sparkOperate = new SparkOperateImpl();
         SparkOperate sparkOperate1 = (SparkOperate) SparkLivyProxy.newProxyInstance(client, sparkOperate);
-        logger.debug("数据库[{}]执行语句：{}", url, sql);
+        // logger.debug("数据库[{}]执行语句：{}", url, sql);
         String dfKey;
         if (null == url || url == "" || url.startsWith("jdbc:hive2"))
             dfKey = sparkOperate1.hive(sql);
