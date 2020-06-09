@@ -23,3 +23,5 @@
 hs_err_pid*
 /src/main/java/com/github/superzhc/SparkDaoDemo.java
 /src/main/java/com/github/superzhc/SparkDaoDemo2.java
+SparkLivyExecuteor.iml
+target/**/**.*
