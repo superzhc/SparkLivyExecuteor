@@ -1,12 +1,13 @@
-package com.github.superzhc;
+package com.github.superzhc.common;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
 /**
  * 2020年06月01日 superz add
  */
-public interface SparkOperate
+public interface SparkSQL
 {
     public String jdbc(String url, String sql);
 
@@ -21,6 +22,8 @@ public interface SparkOperate
     public String hive(String sql);
 
     String json(String... paths);
+
+    public String json(List<String> lst);
 
     String parquet(String... paths);
 

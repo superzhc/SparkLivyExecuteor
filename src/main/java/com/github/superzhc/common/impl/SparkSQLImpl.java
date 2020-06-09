@@ -1,11 +1,13 @@
-package com.github.superzhc;
+package com.github.superzhc.common.impl;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.github.superzhc.common.SparkSQL;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -21,7 +23,7 @@ import com.github.superzhc.livy.AbstractSparkSession;
 /**
  * 2020年06月01日 superz add
  */
-public class SparkOperateImpl extends AbstractSparkSession implements SparkOperate
+public class SparkSQLImpl extends AbstractSparkSession implements SparkSQL
 {
     @Override
     public String jdbc(String url, String sql) {
@@ -86,6 +88,17 @@ public class SparkOperateImpl extends AbstractSparkSession implements SparkOpera
      */
     public String json(String... paths){
         Dataset<Row> df=spark.read().json(paths);
+        return SparkDataFrameMapping.getInstance().set(df);
+    }
+
+    /**
+     * Json字符串转换成DataFrame
+     * @param lst
+     * @return
+     */
+    public String json(List<String> lst) {
+        JavaRDD<String> rdd = JavaSparkContext.fromSparkContext(spark.sparkContext()).parallelize(lst);
+        Dataset<Row> df = spark.read().json(rdd);
         return SparkDataFrameMapping.getInstance().set(df);
     }
 

@@ -17,16 +17,14 @@ public interface SparkDataFrame
 
     SparkDataFrame execute(String sql, String alias);
 
+    SparkDataFrame select(String... columns);
+
+    SparkDataFrame filter(String conditionExpr);
+
     public long count();
 
-    /**
-     * 数据在Spark服务器上打印，若需要获取数据使用take方法来获取数据
-     */
     public String show();
 
-    /**
-     * 数据在Spark服务器上打印，若需要获取数据使用take方法来获取数据
-     */
     public String show(int numRows);
 
     public Row[] collect();

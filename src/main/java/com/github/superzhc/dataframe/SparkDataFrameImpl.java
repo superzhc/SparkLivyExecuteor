@@ -80,6 +80,13 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
     }
+    
+    public SparkDataFrame filter(String conditionExpr) {
+        Dataset<Row> df = dataFrame();
+        df = df.filter(conditionExpr);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
 
     /**
      * 数据的条数

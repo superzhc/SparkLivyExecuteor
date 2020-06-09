@@ -1,5 +1,7 @@
 package com.github.superzhc;
 
+import com.github.superzhc.common.SparkSQL;
+import com.github.superzhc.common.impl.SparkSQLImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +35,13 @@ public class SparkDao
     }
 
     public SparkDataFrame query(String sql, String alias) {
-        SparkOperateImpl sparkOperate = new SparkOperateImpl();
-        SparkOperate sparkOperate1 = (SparkOperate) SparkLivyProxy.newProxyInstance(client, sparkOperate);
+        SparkSQL sparkSQL1 = (SparkSQL) SparkLivyProxy.newProxyInstance(client, new SparkSQLImpl());
         // logger.debug("数据库[{}]执行语句：{}", url, sql);
         String dfKey;
         if (null == url || url == "" || url.startsWith("jdbc:hive2"))
-            dfKey = sparkOperate1.hive(sql);
+            dfKey = sparkSQL1.hive(sql);
         else
-            dfKey = sparkOperate1.jdbc(url, "(" + sql + ") " + alias);
+            dfKey = sparkSQL1.jdbc(url, "(" + sql + ") " + alias);
         logger.debug("DataFrame的唯一标识：{}", dfKey);
         SparkDataFrameImpl sparkDataFrame = new SparkDataFrameImpl(dfKey, alias);
         return (SparkDataFrame) SparkLivyProxy.newProxyInstance(client, sparkDataFrame);
