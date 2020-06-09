@@ -22,4 +22,4 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 /src/main/java/com/github/superzhc/SparkDaoDemo.java
-/src/main/java/com/github/superzhc/RDDJob.java
+/src/main/java/com/github/superzhc/SparkDaoDemo2.java
