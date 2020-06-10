@@ -8,6 +8,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.superzhc.utils.HttpRequest;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+
 /**
  * 2020年06月08日 superz add
  */
@@ -168,9 +172,20 @@ public class SparkLivyRestClient
             return sb.toString();
         }
 
-        public String getAsync() {
-            // TODO
-            throw new RuntimeException("TODO！！！");
+        /**
+         * 异步获取数据
+         * @return
+         */
+        public Future<String> getAsync() {
+            Callable<String> callable = new Callable<String>()
+            {
+                @Override
+                public String call() throws Exception {
+                    return get();
+                }
+            };
+            Future<String> future = new FutureTask<>(callable);
+            return future;
         }
 
         public String cancel() {
