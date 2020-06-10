@@ -10,6 +10,8 @@ import com.github.superzhc.dataframe.SparkDataFrameImpl;
 import com.github.superzhc.livy.SparkLivyClient;
 import com.github.superzhc.livy.SparkLivyProxy;
 
+import java.util.Properties;
+
 /**
  * 2020年06月01日 superz add
  */
@@ -38,10 +40,21 @@ public class SparkDao
         SparkSQL sparkSQL1 = (SparkSQL) SparkLivyProxy.newProxyInstance(client, new SparkSQLImpl());
         // logger.debug("数据库[{}]执行语句：{}", url, sql);
         String dfKey;
-        if (null == url || url == "" || url.startsWith("jdbc:hive2"))
+        if (null == url || url == "" || url.startsWith("jdbc:hive2")) {
             dfKey = sparkSQL1.hive(sql);
-        else
-            dfKey = sparkSQL1.jdbc(url, "(" + sql + ") " + alias);
+        }
+        else {
+            // BUG：在服务器执行可能会报异常：java.sql.SQLException:No suitable driver
+            // 2020年6月10日 添加如下属性，数据库连接驱动
+            Properties props = new Properties();
+            if (url.startsWith("jdbc:oracle:thin")) {
+                props.put("driver", "oracle.jdbc.driver.OracleDriver");
+            }
+            else if (url.startsWith("jdbc:mysql")) {
+                props.put("driver", "com.mysql.jdbc.Driver");
+            }
+            dfKey = sparkSQL1.jdbc(url, "(" + sql + ") " + alias, props);
+        }
         logger.debug("DataFrame的唯一标识：{}", dfKey);
         SparkDataFrameImpl sparkDataFrame = new SparkDataFrameImpl(dfKey, alias);
         return (SparkDataFrame) SparkLivyProxy.newProxyInstance(client, sparkDataFrame);
