@@ -33,12 +33,18 @@ public class SparkSQLImpl extends AbstractSparkSession implements SparkSQL
     @Override
     public String jdbc(String url, String sql, Properties props) {
         /*
-        // 2020年6月4日 用户传递配置来实现分区的示例
-        props.put("partitionColumn", "id");// 分区列，列为整数类型和时间
-        props.put("lowerBound", "1");// 下限
-        props.put("upperBound", "123456789");// 上限
-        props.put("numPartitions", "50");// 分区数
-        */
+         * // 2020年6月4日 用户传递配置来实现分区的示例
+         * // 整数类型
+         * props.put("partitionColumn", "id");// 分区列，列为整数类型和时间
+         * props.put("lowerBound", "1");// 下限
+         * props.put("upperBound", "123456789");// 上限
+         * props.put("numPartitions", "50");// 分区数
+         * // 时间类型
+         * props.put("partitionColumn", "date1");// 分区列，列为整数类型和时间
+         * props.put("lowerBound", "2019-01-01");// 下限
+         * props.put("upperBound", "2020-06-11");// 上限
+         * props.put("numPartitions", "50");// 分区数
+         */
         Dataset<Row> df = spark.read().jdbc(url, sql, props);
         // 修复：Dataset并不能作为返回值返回，返回一个唯一标识
         // return df;
@@ -56,7 +62,8 @@ public class SparkSQLImpl extends AbstractSparkSession implements SparkSQL
     @Override
     public String jdbc(String url, String sql, String[] predicates, Properties props) {
         // 谓词设置
-        // predicates = new String[] {"reportDate<'2020-01-01'", "reportDate>='2020-01-01'" };
+        // predicates = new String[] {"reportDate<'2020-01-01'",
+        // "reportDate>='2020-01-01'" };
         Dataset<Row> df = spark.read().jdbc(url, sql, predicates, props);
         return SparkDataFrameMapping.getInstance().set(df);
     }
@@ -73,9 +80,23 @@ public class SparkSQLImpl extends AbstractSparkSession implements SparkSQL
         return jdbc(url, sql, props);
     }
 
+    public String jdbc4Partition(String url, String sql, String partitionColumn, Long lowerBound, Long upperBound,
+            Integer numPartitions) {
+        return jdbc4Partition(url, sql, partitionColumn, lowerBound, upperBound, numPartitions, new Properties());
+    }
+
+    public String jdbc4Partition(String url, String sql, String partitionColumn, Long lowerBound, Long upperBound,
+            Integer numPartitions, Properties props) {
+        props.put("partitionColumn", partitionColumn);// 分区列，列为整数类型和时间
+        props.put("lowerBound", lowerBound);// 下限
+        props.put("upperBound", upperBound);// 上限
+        props.put("numPartitions", numPartitions);// 分区数
+        return jdbc(url, sql, props);
+    }
+
     @Override
     public String hive(String sql) {
-        Dataset<Row> df =spark.sql(sql);
+        Dataset<Row> df = spark.sql(sql);
         // 修复：Dataset并不能作为返回值返回，返回一个唯一标识
         // return df;
         return SparkDataFrameMapping.getInstance().set(df);
@@ -86,8 +107,8 @@ public class SparkSQLImpl extends AbstractSparkSession implements SparkSQL
      * @param paths
      * @return
      */
-    public String json(String... paths){
-        Dataset<Row> df=spark.read().json(paths);
+    public String json(String... paths) {
+        Dataset<Row> df = spark.read().json(paths);
         return SparkDataFrameMapping.getInstance().set(df);
     }
 
@@ -116,15 +137,17 @@ public class SparkSQLImpl extends AbstractSparkSession implements SparkSQL
         return SparkDataFrameMapping.getInstance().set(df);
     }
 
-    public String hbase(String zookeeper,Integer port,String tableName){
+    public String hbase(String zookeeper, Integer port, String tableName) {
         // 原生的方式
-//        Configuration config= HBaseConfiguration.create();
-//        config.set("hbase.zookeeper.quorum", zookeeper);
-//        config.set("hbase.zookeeper.property.clientPort", String.valueOf(port));
-//        config.set("hbase.mapreduce.inputtable",tableName);
-//        JavaRDD rdd=spark.sparkContext().newAPIHadoopRDD(config,TableInputFormat.class, ImmutableBytesWritable.class, Result.class);
+        // Configuration config= HBaseConfiguration.create();
+        // config.set("hbase.zookeeper.quorum", zookeeper);
+        // config.set("hbase.zookeeper.property.clientPort", String.valueOf(port));
+        // config.set("hbase.mapreduce.inputtable",tableName);
+        // JavaRDD
+        // rdd=spark.sparkContext().newAPIHadoopRDD(config,TableInputFormat.class,
+        // ImmutableBytesWritable.class, Result.class);
 
-        //TODO
+        // TODO
 
         throw new RuntimeException("该方法尚未实现");
     }

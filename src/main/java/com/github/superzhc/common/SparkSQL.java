@@ -19,6 +19,12 @@ public interface SparkSQL
 
     String jdbc(String url, String sql, String[] predicates, Properties props);
 
+    String jdbc4Partition(String url, String sql, String partitionColumn, Long lowerBound, Long upperBound,
+            Integer numPartitions);
+
+    String jdbc4Partition(String url, String sql, String partitionColumn, Long lowerBound, Long upperBound,
+            Integer numPartitions, Properties props);
+
     public String hive(String sql);
 
     String json(String... paths);
