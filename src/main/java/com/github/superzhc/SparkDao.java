@@ -2,6 +2,8 @@ package com.github.superzhc;
 
 import com.github.superzhc.common.SparkSQL;
 import com.github.superzhc.common.impl.SparkSQLImpl;
+import com.github.superzhc.livy.SparkLivy;
+import com.github.superzhc.utils.Driver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +39,8 @@ public class SparkDao
     }
 
     public SparkDataFrame query(String sql, String alias) {
-        SparkSQL sparkSQL1 = (SparkSQL) SparkLivyProxy.newProxyInstance(client, new SparkSQLImpl());
+        SparkLivy sparkLivy=new SparkLivy(client);
+        SparkSQL sparkSQL1 = (SparkSQL) sparkLivy.wrapper(new SparkSQLImpl());
         // logger.debug("数据库[{}]执行语句：{}", url, sql);
         String dfKey;
         if (null == url || url == "" || url.startsWith("jdbc:hive2")) {
@@ -47,17 +50,12 @@ public class SparkDao
             // BUG：在服务器执行可能会报异常：java.sql.SQLException:No suitable driver
             // 2020年6月10日 添加如下属性，数据库连接驱动
             Properties props = new Properties();
-            if (url.startsWith("jdbc:oracle:thin")) {
-                props.put("driver", "oracle.jdbc.driver.OracleDriver");
-            }
-            else if (url.startsWith("jdbc:mysql")) {
-                props.put("driver", "com.mysql.jdbc.Driver");
-            }
+            props.put("driver", Driver.match(url).fullClassName());
             dfKey = sparkSQL1.jdbc(url, "(" + sql + ") " + alias, props);
         }
         logger.debug("DataFrame的唯一标识：{}", dfKey);
         SparkDataFrameImpl sparkDataFrame = new SparkDataFrameImpl(dfKey, alias);
-        return (SparkDataFrame) SparkLivyProxy.newProxyInstance(client, sparkDataFrame);
+        return (SparkDataFrame) sparkLivy.wrapper(sparkDataFrame);
     }
 
     /**

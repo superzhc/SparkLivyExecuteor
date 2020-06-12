@@ -6,7 +6,7 @@ package com.github.superzhc.livy;
 public class SparkLivy
 {
     private SparkLivyClient client;
-    private final Integer sessionId;
+    private Integer sessionId;
 
     public SparkLivy() {
         this.client = new SparkLivyClient();
@@ -16,6 +16,11 @@ public class SparkLivy
     public SparkLivy(Integer sessionId) {
         this.sessionId=sessionId;
         this.client = new SparkLivyClient(sessionId);
+    }
+
+    public SparkLivy(SparkLivyClient client){
+        this.client=client;
+        this.sessionId=client.getSessionId();
     }
 
     public <T extends AbstractSparkSession> Object wrapper(T obj){
