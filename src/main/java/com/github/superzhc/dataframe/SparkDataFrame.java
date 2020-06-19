@@ -21,6 +21,8 @@ public interface SparkDataFrame
 
     SparkDataFrame selectExpr(String... columns);
 
+    SparkDataFrame rename(String oldColumnName, String columnName);
+
     SparkDataFrame filter(String conditionExpr);
 
     SparkDataFrame where(String conditionExpr);
@@ -42,6 +44,20 @@ public interface SparkDataFrame
     SparkDataFrame unionAll(String key);
 
     SparkDataFrame unionAll(String key, String alias);
+
+    SparkDataFrame join(String key, String... columns);
+
+    SparkDataFrame join(String key, String[] columns, String joinType);
+
+    SparkDataFrame join(String key, String[] columns, String joinType, String alias);
+
+    SparkDataFrame intersect(String key);
+
+    SparkDataFrame intersect(String key, String alias);
+
+    SparkDataFrame except(String key);
+
+    SparkDataFrame except(String key, String alias);
 
     long count();
 
@@ -72,7 +88,7 @@ public interface SparkDataFrame
 
     void saveHive(String tableName);
 
-    void saveHive(String tableName,String saveMode);
+    void saveHive(String tableName, String saveMode);
 
     void saveParquet(String path);
 

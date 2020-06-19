@@ -3,6 +3,8 @@ package com.github.superzhc.dataframe;
 import com.github.superzhc.livy.AbstractSparkSession;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import scala.collection.JavaConversions;
+import scala.collection.Seq;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -98,6 +100,13 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         Dataset<Row> df = dataFrame();
         df = df.selectExpr(columns);
 
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+    
+    public SparkDataFrame rename(String oldColumnName, String columnName) {
+        Dataset<Row> df = dataFrame();
+        df = df.withColumnRenamed(oldColumnName, columnName);
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
     }
@@ -210,6 +219,71 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         Dataset<Row> df = dataFrame();
         Dataset<Row> otherDf = SparkDataFrameMapping.getInstance().get(key);
         df = df.unionAll(otherDf);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, alias);
+    }
+
+    public SparkDataFrame join(String key, String... columns) {
+        return join(key, columns, "inner", tableName);
+    }
+
+    public SparkDataFrame join(String key, String[] columns, String joinType) {
+        return join(key, columns, joinType, tableName);
+    }
+
+    /**
+     * Join操作
+     * @param key
+     * @param alias
+     * @param joinType
+     * @param columns
+     * @return
+     */
+    public SparkDataFrame join(String key, String[] columns, String joinType, String alias) {
+        Dataset<Row> df = dataFrame();
+        Dataset<Row> otherDf = SparkDataFrameMapping.getInstance().get(key);
+        if (null == columns || columns.length == 0)
+            df = df.join(otherDf);// 笛卡尔积
+        else if (columns.length == 1)
+            df = df.join(otherDf, columns[0]);
+        else
+            df = df.join(otherDf, JavaConversions.asScalaIterator(Arrays.asList(columns).iterator()).toSeq(), joinType);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, alias);
+    }
+
+    public SparkDataFrame intersect(String key) {
+        return intersect(key, tableName);
+    }
+
+    /**
+     * 获取两个DataFrame中共有的记录
+     * @param key
+     * @param alias
+     * @return
+     */
+    public SparkDataFrame intersect(String key, String alias) {
+        Dataset<Row> df = dataFrame();
+        Dataset<Row> otherDf = SparkDataFrameMapping.getInstance().get(key);
+        df = df.intersect(otherDf);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, alias);
+    }
+
+    public SparkDataFrame except(String key) {
+        return except(key, tableName);
+    }
+
+    /**
+     * 获取一个DataFrame中有另一个DataFrame中没有的记录
+     * @param key
+     * @param alias
+     * @return
+     */
+    public SparkDataFrame except(String key, String alias) {
+        Dataset<Row> df = dataFrame();
+        Dataset<Row> otherDf = SparkDataFrameMapping.getInstance().get(key);
+        df = df.except(otherDf);
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, alias);
     }

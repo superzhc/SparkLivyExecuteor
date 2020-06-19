@@ -22,4 +22,13 @@ public class SparkDataFrameUtils
     public static SparkDataFrame unionAll(SparkDataFrame df, SparkDataFrame otherDf, String alias) {
         return df.unionAll(otherDf.key(), alias);
     }
+
+    public static SparkDataFrame join(SparkDataFrame df, SparkDataFrame otherDf, String joinType, String... columns) {
+        return df.join(otherDf.key(), columns, joinType);
+    }
+
+    public static SparkDataFrame join(SparkDataFrame df, SparkDataFrame otherDf, String alias, String joinType,
+            String... columns) {
+        return df.join(otherDf.key(), columns, joinType, alias);
+    }
 }
