@@ -35,6 +35,14 @@ public interface SparkDataFrame
 
     SparkDataFrame dropDuplicates(String... columns);
 
+    SparkDataFrame union(String key);
+
+    SparkDataFrame union(String key, String alias);
+
+    SparkDataFrame unionAll(String key);
+
+    SparkDataFrame unionAll(String key, String alias);
+
     long count();
 
     String show();

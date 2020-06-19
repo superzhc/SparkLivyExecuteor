@@ -177,6 +177,42 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
     }
+    
+    public SparkDataFrame union(String key) {
+        return union(key, tableName);
+    }
+
+    /**
+     * 对两个DataFrame进行组合
+     * @param key
+     * @param alias
+     * @return
+     */
+    public SparkDataFrame union(String key, String alias) {
+        Dataset<Row> df = dataFrame();
+        Dataset<Row> otherDf = SparkDataFrameMapping.getInstance().get(key);
+        df = df.union(otherDf);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, alias);
+    }
+
+    public SparkDataFrame unionAll(String key) {
+        return unionAll(key, tableName);
+    }
+
+    /**
+     * 对两个DataFrame进行组合
+     * @param key
+     * @param alias
+     * @return
+     */
+    public SparkDataFrame unionAll(String key, String alias) {
+        Dataset<Row> df = dataFrame();
+        Dataset<Row> otherDf = SparkDataFrameMapping.getInstance().get(key);
+        df = df.unionAll(otherDf);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, alias);
+    }
 
     /**
      * 数据的条数
