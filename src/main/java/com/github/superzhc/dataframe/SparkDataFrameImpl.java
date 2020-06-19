@@ -76,7 +76,12 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
             return null;
 
         Dataset<Row> df = dataFrame();
-        df = df.select(columns[0], Arrays.copyOfRange(columns, 1, columns.length - 1));
+        // fix:读取的列只有一列的情况，选择正确的方法
+        if (columns.length == 1)
+            df = df.select(columns[0]);
+        else
+            df = df.select(columns[0], Arrays.copyOfRange(columns, 1, columns.length - 1));
+
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
     }
