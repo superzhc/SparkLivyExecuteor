@@ -1,5 +1,7 @@
 package com.github.superzhc.livy;
 
+import com.github.superzhc.spark.AbstractSparkSession;
+
 /**
  * 2020年06月05日 superz add
  */

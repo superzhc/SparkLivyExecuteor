@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 
+import com.github.superzhc.spark.AbstractSparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

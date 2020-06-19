@@ -19,7 +19,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 import com.github.superzhc.dataframe.SparkDataFrameMapping;
-import com.github.superzhc.livy.AbstractSparkSession;
+import com.github.superzhc.spark.AbstractSparkSession;
 
 /**
  * 2020年06月01日 superz add

@@ -1,10 +1,9 @@
 package com.github.superzhc.dataframe;
 
-import com.github.superzhc.livy.AbstractSparkSession;
+import com.github.superzhc.spark.AbstractSparkSession;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import scala.collection.JavaConversions;
-import scala.collection.Seq;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,5 +1,6 @@
 package com.github.superzhc.livy;
 
+import com.github.superzhc.spark.AbstractSparkSession;
 import org.apache.livy.Job;
 import org.apache.livy.JobContext;
 

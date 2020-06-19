@@ -17,6 +17,7 @@ import java.util.Properties;
 /**
  * 2020年06月01日 superz add
  */
+@Deprecated
 public class SparkDao
 {
     private final static Logger logger = LoggerFactory.getLogger(SparkDao.class);

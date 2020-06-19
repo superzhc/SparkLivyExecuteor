@@ -6,7 +6,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 
 import com.github.superzhc.common.SparkRDD;
-import com.github.superzhc.livy.AbstractSparkSession;
+import com.github.superzhc.spark.AbstractSparkSession;
 import com.github.superzhc.rdd.SparkRDDMapping;
 
 /**
