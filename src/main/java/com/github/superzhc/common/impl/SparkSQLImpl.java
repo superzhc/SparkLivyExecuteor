@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.github.superzhc.common.SparkSQL;
+import com.github.superzhc.utils.Driver;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
@@ -45,6 +46,8 @@ public class SparkSQLImpl extends AbstractSparkSession implements SparkSQL
          * props.put("upperBound", "2020-06-11");// 上限
          * props.put("numPartitions", "50");// 分区数
          */
+        if (!props.containsKey("driver"))
+            props.put("driver", Driver.match(url).fullClassName());
         Dataset<Row> df = spark.read().jdbc(url, sql, props);
         // 修复：Dataset并不能作为返回值返回，返回一个唯一标识
         // return df;
@@ -62,8 +65,9 @@ public class SparkSQLImpl extends AbstractSparkSession implements SparkSQL
     @Override
     public String jdbc(String url, String sql, String[] predicates, Properties props) {
         // 谓词设置
-        // predicates = new String[] {"reportDate<'2020-01-01'",
-        // "reportDate>='2020-01-01'" };
+        // predicates = new String[] {"reportDate<'2020-01-01'","reportDate>='2020-01-01'" };
+        if (!props.containsKey("driver"))
+            props.put("driver", Driver.match(url).fullClassName());
         Dataset<Row> df = spark.read().jdbc(url, sql, predicates, props);
         return SparkDataFrameMapping.getInstance().set(df);
     }

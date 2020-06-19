@@ -6,15 +6,17 @@ import org.apache.livy.LivyClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URI;
 
 /**
  * 2020年06月01日 superz add
  */
-public class SparkLivyClient
+public class SparkLivyClient implements Closeable
 {
     private static final Logger logger = LoggerFactory.getLogger(SparkLivyClient.class);
 
@@ -151,5 +153,15 @@ public class SparkLivyClient
         catch (Exception e) {
             throw new RuntimeException("创建LivyClient异常：" + e.getMessage());
         }
+    }
+
+    /**
+     * 关闭资源
+     * @throws IOException
+     */
+    @Override
+    public void close() throws IOException {
+        if (null != client)
+            client.stop(true);
     }
 }
