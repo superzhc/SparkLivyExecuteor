@@ -19,23 +19,44 @@ public interface SparkDataFrame
 
     SparkDataFrame select(String... columns);
 
+    SparkDataFrame selectExpr(String... columns);
+
     SparkDataFrame filter(String conditionExpr);
 
-    public long count();
+    SparkDataFrame where(String conditionExpr);
 
-    public String show();
+    SparkDataFrame drop(String... columns);
 
-    public String show(int numRows);
+    SparkDataFrame limit(int nums);
 
-    public Row[] collect();
+    SparkDataFrame orderBy(String... sortCols);
 
-    public List<Row> collectAsList();
+    SparkDataFrame distinct();
 
-    public Row[] take(int n);
+    SparkDataFrame dropDuplicates(String... columns);
 
-    public List<Row> takeAsList(int n);
+    long count();
 
-    public Row first();
+    String show();
+
+    String show(int numRows);
+
+    Row[] collect();
+
+    List<Row> collectAsList();
+
+    Row[] take(int n);
+
+    List<Row> takeAsList(int n);
+
+    Row first();
+
+    /**
+     * 获取指定字段的统计信息
+     * @param columns
+     * @return
+     */
+    SparkDataFrame describe(String... columns);
 
     void saveJdbc(String url, String tableName, Properties props);
 

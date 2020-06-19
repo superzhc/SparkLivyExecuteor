@@ -85,10 +85,95 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
     }
+
+    /**
+     * 对指定字段进行特殊处理
+     * @param columns
+     * @return
+     */
+    public SparkDataFrame selectExpr(String... columns) {
+        if (null == columns || columns.length == 0)
+            return null;
+
+        Dataset<Row> df = dataFrame();
+        df = df.selectExpr(columns);
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
     
     public SparkDataFrame filter(String conditionExpr) {
         Dataset<Row> df = dataFrame();
         df = df.filter(conditionExpr);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    public SparkDataFrame where(String conditionExpr) {
+        return filter(conditionExpr);
+    }
+
+    /**
+     * 去除指定字段，保留其他字段
+     * @param columns
+     * @return
+     */
+    public SparkDataFrame drop(String... columns) {
+        Dataset<Row> df = dataFrame();
+        df = df.drop(columns);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 获取指定DataFrame的前n行记录，得到一个新的DataFrame对象
+     * @param nums
+     * @return
+     */
+    public SparkDataFrame limit(int nums) {
+        Dataset<Row> df = dataFrame();
+        df = df.limit(nums);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 按指定字段排序，默认为升序
+     * @param sortCols
+     * @return
+     */
+    public SparkDataFrame orderBy(String... sortCols) {
+        if (null == sortCols || sortCols.length == 0)
+            return null;
+
+        Dataset<Row> df = dataFrame();
+        if (sortCols.length == 1)
+            df = df.orderBy(sortCols[0]);
+        else
+            df = df.select(sortCols[0], Arrays.copyOfRange(sortCols, 1, sortCols.length - 1));
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 返回当前DataFrame中不重复的Row记录
+     * @return
+     */
+    public SparkDataFrame distinct() {
+        Dataset<Row> df = dataFrame();
+        df = df.distinct();
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 根据指定字段去重
+     * @param columns
+     * @return
+     */
+    public SparkDataFrame dropDuplicates(String... columns) {
+        Dataset<Row> df = dataFrame();
+        df = df.dropDuplicates(columns);
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
     }
@@ -172,6 +257,21 @@ public class SparkDataFrameImpl extends AbstractSparkSession implements SparkDat
      */
     public Row first() {
         return dataFrame().first();
+    }
+
+    /**
+     * 获取指定字段的统计信息
+     * @param columns
+     * @return
+     */
+    public SparkDataFrame describe(String... columns) {
+        if (null == columns || columns.length == 0)
+            return null;
+
+        Dataset<Row> df = dataFrame().describe(columns);
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
     }
 
     public void saveJdbc(String url, String tableName, Properties props){
