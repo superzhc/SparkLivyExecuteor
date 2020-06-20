@@ -25,8 +25,13 @@ public class SparkLivy
         this.sessionId=client.getSessionId();
     }
 
+    @Deprecated
     public <T extends AbstractSparkSession> Object wrapper(T obj){
         return SparkLivyProxy.newProxyInstance(client, obj);
+    }
+
+    public <T extends AbstractSparkSession> T cglib(T obj) {
+        return SparkLivyCGLibProxy.newProxyInstance(client, obj);
     }
 
     public Integer getSessionId() {
