@@ -43,7 +43,7 @@ SparkLivy sparkLivy = new SparkLivy();
 我们读取数据源都在SparkSQL类中，如下：
 
 ```java
-SparkSQL sparkSQL = (SparkSQL) sparkLivy.wrapper(new SparkSQLImpl());
+SparkSQL sparkSQL = sparkLivy.cglig(new SparkSQL());
 ```
 
 目前支持的数据源有**关系型数据库**、**hive**、**json**、**parquet**、**csv**，简单示例如下：
@@ -81,8 +81,17 @@ String dfKey3 = sparkSQL.json(jsons);
 
 ```java
 // 通过数据的唯一标识构建DataFrame
-SparkDataFrameImpl sparkDataFrame = new SparkDataFrameImpl(dfKey, "testx");// 第二个参数设置关系表的名称
-SparkDataFrame df = (SparkDataFrameImpl) sparkLivy.wrapper(sparkDataFrame);
+SparkDataFrame sparkDataFrame = new SparkDataFrame(dfKey, "testx");// 第二个参数设置关系表的名称
+SparkDataFrame df = sparkLivy.cglib(sparkDataFrame);
+```
+
+为了简化读取数据源并转换成 DataFrame，提供了一个 SparkLivyDao 工具类，使用如下：
+
+```java
+SparkLivyDao dao=new SparkLivyDao();
+String url = "jdbc:mysql://127.0.0.1:3306/superz?user=root&password=123456&useSSL=false";
+String sql = "select * from test1";
+SparkDataFrame df = dao.jdbc(url, sql,"testx");
 ```
 
 #### printSchema
