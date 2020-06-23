@@ -1,16 +1,18 @@
 package com.github.superzhc.livy;
 
-import com.alibaba.fastjson.JSONArray;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import com.github.superzhc.utils.HttpRequest;
-
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.github.superzhc.utils.HttpRequest;
+import com.github.superzhc.utils.JacksonNode;
+import com.github.superzhc.utils.JacksonUtils;
 
 /**
  * 2020年06月08日 superz add
@@ -73,12 +75,24 @@ public class SparkLivyRestClient
 
         public String driverLogUrl() {
             String ret = get();
-            return JSON.parseObject(ret).getJSONObject("appInfo").getString("driverLogUrl");
+            try {
+                return JacksonUtils.convert(ret).getString("appInfo", "driverLogUrl");
+            }
+            catch (Exception ex) {
+                logger.error("解析json失败", ex);
+            }
+            return null;
         }
 
         public String sparkUI() {
             String ret = get();
-            return JSON.parseObject(ret).getJSONObject("appInfo").getString("sparkUiUrl");
+            try {
+                return JacksonUtils.convert(ret).getString("appInfo", "sparkUiUrl");
+            }
+            catch (Exception ex) {
+                logger.error("解析json失败", ex);
+            }
+            return null;
         }
 
         public String state() {
@@ -104,9 +118,9 @@ public class SparkLivyRestClient
             HttpRequest request = HttpRequest.get(fullUrl("/log"));
             String ret = request.body();
             logger.debug("获取Livy[sessionId={}]的日志信息：{}", sessionId, ret);
-            JSONArray logs = JSON.parseObject(ret).getJSONArray("log");
+            JsonNode logs=JacksonUtils.convert(ret).get("log").origin();
             for (int i = 0, len = logs.size(); i < len; i++) {
-                sb.append(logs.get(i)).append("\n");
+                sb.append(logs.get(i).asText()).append("\n");
             }
             return sb.toString();
         }
@@ -122,16 +136,16 @@ public class SparkLivyRestClient
 
         public Integer execute(String code, String kind) {
             logger.debug("执行代码片段：{}", code);
-            JSONObject data = new JSONObject();
+            Map<String,String> data = new HashMap<>();
             data.put("kind", kind);
             data.put("code", code);
             HttpRequest request = HttpRequest.post(fullUrl("/statements")).contentType("application/json");
-            request.send(JSON.toJSONBytes(data));
+            request.send(JacksonUtils.toJavaString(data));
             String ret = request.body();
             logger.debug("执行代码片段的返回结果：{}", ret);
             if (null == ret || "".equals(ret))
                 return -1;
-            return JSON.parseObject(ret).getInteger("id");
+            return JacksonUtils.convert(ret).getInteger("id");
         }
 
         private String fullUrl(String path) {
@@ -159,7 +173,7 @@ public class SparkLivyRestClient
                 HttpRequest request = HttpRequest.get(fullUrl(""));
                 String ret = request.body();
                 logger.debug("Livy[sessionId={},statementId={}]的代码片段执行返回信息：{}", sessionId, statementId, ret);
-                JSONObject obj = JSON.parseObject(ret);
+                JacksonNode obj=JacksonUtils.convert(ret);
                 String state = obj.getString("state");
                 if ("waiting".equals(state))
                     continue;
