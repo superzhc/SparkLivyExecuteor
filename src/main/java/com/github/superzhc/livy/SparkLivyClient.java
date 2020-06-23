@@ -46,7 +46,7 @@ public class SparkLivyClient implements Closeable
         logger.debug("Livy的访问地址：" + __livyUrl);
         logger.info("创建LivyClient[{}]开始...", __livyUrl);
         this.client = createLivyClient(__livyUrl);
-        logger.info("创建LivyClient[{}]成功！", __livyUrl);
+        logger.info("创建LivyClient[url={{}},sessionId={{}}]成功！", __livyUrl, getSessionId());
 
         // 上传jar包
         String __jars;

@@ -21,15 +21,18 @@ public class JacksonNode implements Serializable
     }
 
     public Integer getInteger(String... fieldNames) {
-        return deepGet(fieldNames).asInt();
+        JsonNode node1 = deepGet(fieldNames);
+        return null == node1 ? null : node1.asInt();
     }
 
     public Double getDouble(String... fieldNames) {
-        return deepGet(fieldNames).asDouble();
+        JsonNode node1 = deepGet(fieldNames);
+        return null == node1 ? null : node1.asDouble();
     }
 
     public String getString(String... fieldNames) {
-        return deepGet(fieldNames).asText();
+        JsonNode node1 = deepGet(fieldNames);
+        return null == node1 ? null : node1.asText();
     }
 
     private JsonNode deepGet(String... fieldNames) {
@@ -38,6 +41,8 @@ public class JacksonNode implements Serializable
 
         JsonNode node1 = node;
         for (String fieldName : fieldNames) {
+            if (null == node1)// 防止报空指针
+                return null;
             node1 = node1.get(fieldName);
         }
         return node1;

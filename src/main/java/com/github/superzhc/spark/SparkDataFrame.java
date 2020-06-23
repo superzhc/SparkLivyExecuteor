@@ -1,22 +1,30 @@
 package com.github.superzhc.spark;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import com.github.superzhc.spark.udf.CodeItem;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.types.DataTypes;
 
 import com.github.superzhc.dataframe.SparkDataFrameMapping;
 import com.github.superzhc.livy.SparkLivyLocal;
+import com.github.superzhc.utils.JacksonUtils;
+import com.github.superzhc.utils.JavaConversionsExt;
 
+import scala.Function1;
 import scala.collection.JavaConversions;
 
 /**
  * 2020年06月19日 superz add
  */
-public class SparkDataFrame extends AbstractSparkSession
+public class SparkDataFrame extends AbstractSparkSession implements Serializable
 {
     // private Dataset<Row> dataFrame;
     private String dfKey;
@@ -440,4 +448,29 @@ public class SparkDataFrame extends AbstractSparkSession
     public String key() {
         return dfKey;
     }
+
+    //=========================自定义函数==============================
+    public SparkDataFrame codeitem(String column, String newColumn, String items) {
+        Dataset<Row> df = dataFrame();
+        
+        // 继承UDF1~22的接口即可实现自定义函数的创建，简单的可类似如下的匿名函数的方式
+//        UDF1 udf1=new UDF1<String,String>()
+//        {
+//            @Override
+//            public String call(String s) throws Exception {
+//                String value = JacksonUtils.convert(items).getString(s);
+//                return null == value ? "" : value;
+//            }
+//        };
+
+        // 自定义函数的使用
+        String fun = "codeitem";
+        spark.udf().register(fun, new CodeItem(items), DataTypes.StringType);
+        // df = df.selectExpr("*", "codeitem(" + column + ") as " + newColumn);
+        df = df.withColumn(newColumn, org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+    //=========================自定义函数==============================
 }
