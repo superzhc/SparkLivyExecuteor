@@ -1,5 +1,7 @@
 package com.github.superzhc.livy;
 
+import com.github.superzhc.utils.JacksonNode;
+import com.github.superzhc.utils.JacksonUtils;
 import org.apache.livy.Job;
 import org.apache.livy.LivyClient;
 import org.apache.livy.LivyClientBuilder;
@@ -55,6 +57,8 @@ public class SparkLivyClient implements Closeable
         else
             __jars = _jars;
         uploadJar(__jars);
+
+        printDebugInfo(__livyUrl);
     }
 
     /**
@@ -84,6 +88,8 @@ public class SparkLivyClient implements Closeable
         logger.info("连接Livy[livyUrl={}]的Session[sessionId={}]开始...", __livyUrl, sessionId);
         this.client = createLivyClient(url);
         logger.info("连接Livy[livyUrl={}]的Session[sessionId={}]完成", __livyUrl, sessionId);
+
+        printDebugInfo(__livyUrl);
     }
 
     public Integer getSessionId() {
@@ -152,6 +158,20 @@ public class SparkLivyClient implements Closeable
         }
         catch (Exception e) {
             throw new RuntimeException("创建LivyClient异常：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 打印调试信息
+     * @param livyUrl
+     */
+    private void printDebugInfo(String livyUrl) {
+        if (logger.isDebugEnabled()) {
+            SparkLivyRestClient restClient = new SparkLivyRestClient(livyUrl);
+            String sessionInfo = restClient.Session(sessionId).get();
+            JacksonNode root = JacksonUtils.convert(sessionInfo);
+            logger.debug("Spark Web UI:[{}]", root.getString("appInfo", "sparkUiUrl"));
+            logger.debug("Spark任务资源管理器的访问地址：[{}]", root.getString("appInfo", "driverLogUrl"));
         }
     }
 
