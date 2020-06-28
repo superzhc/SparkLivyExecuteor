@@ -1,5 +1,7 @@
 <h1 align="center"><a href="https://github.com/superzhc/SparkLivyExecuteor">SparkLivyExecuteor</a></h1>
 
+[![Build Status](https://travis-ci.org/superzhc/SuperzHadoop.svg?branch=master)](https://travis-ci.org/superzhc/SuperzHadoop)
+
 使用 Livy 提交 Spark 任务
 
 ## 环境变量配置
