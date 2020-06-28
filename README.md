@@ -1,6 +1,6 @@
 <h1 align="center"><a href="https://github.com/superzhc/SparkLivyExecuteor">SparkLivyExecuteor</a></h1>
 
-[![![Build Status](https://travis-ci.org/superzhc/SparkLivyExecuteor.svg?branch=master)](https://travis-ci.org/superzhc/SparkLivyExecuteor)
+[![Build Status](https://travis-ci.org/superzhc/SparkLivyExecuteor.svg?branch=master)](https://travis-ci.org/superzhc/SparkLivyExecuteor)
 
 使用 Livy 提交 Spark 任务
 
