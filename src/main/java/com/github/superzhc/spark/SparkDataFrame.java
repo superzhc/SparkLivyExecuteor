@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import com.github.superzhc.livy.SparkLivyResultProxy;
 import com.github.superzhc.spark.udf.CodeItem;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -24,6 +25,7 @@ import scala.collection.JavaConversions;
 /**
  * 2020年06月19日 superz add
  */
+@SparkLivyResultProxy
 public class SparkDataFrame extends AbstractSparkSession implements Serializable
 {
     // private Dataset<Row> dataFrame;

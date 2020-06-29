@@ -46,8 +46,14 @@ public class SparkLivyCGLibProxy<T extends AbstractSparkSession> implements Meth
         logger.debug("通过Livy调用：[{}]，执行方法：[{}]，参数：{}", clazz.getSimpleName(), method.getName(), Arrays.toString(params));
         /* 2020年6月9日 代理调用的方法只是将方法传递给Livy上执行同样的方法，所以可以直接将方法的参数类型直接传递给Livy上进行反射的方法 */
         Object obj = client.submit(new SparkLivyJob(target, method.getName(), method.getParameterTypes(), params));
-        if (null != obj && obj.getClass() == clazz) {// 若返回值的类型跟被代理的类型式一样的，要使返回值也被代理起来
-            return newProxyInstance(client, (T) obj);
+//        if (null != obj && obj.getClass() == clazz) {// 若返回值的类型跟被代理的类型式一样的，要使返回值也被代理起来
+//            return newProxyInstance(client, (T) obj);
+//        }
+        /* 2020年6月29日 判断返回值是否需要被代理 */
+        if (null != obj) {
+            SparkLivyResultProxy sparkLivyResultProxy = obj.getClass().getAnnotation(SparkLivyResultProxy.class);
+            if (null != sparkLivyResultProxy && sparkLivyResultProxy.value())
+                return newProxyInstance(client, (AbstractSparkSession) obj);
         }
         return obj;
     }
