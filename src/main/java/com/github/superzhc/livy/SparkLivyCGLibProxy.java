@@ -37,13 +37,14 @@ public class SparkLivyCGLibProxy<T extends AbstractSparkSession> implements Meth
         if (Object.class.equals(method.getDeclaringClass()) || //
                 (null != method.getAnnotation(SparkLivyLocal.class)
                         && method.getAnnotation(SparkLivyLocal.class).value() == true)) {
-            logger.debug("本地调用：[{}]，执行方法：{}，参数：{}", target.getClass().getSimpleName(), method.getName(),
+            logger.debug("直接Local调用：[{}]，执行方法：{}，参数：{}", target.getClass().getSimpleName(), method.getName(),
                     Arrays.toString(params));
             return proxy.invoke(target, params);
         }
 
         Class clazz = target.getClass();
         logger.debug("通过Livy调用：[{}]，执行方法：[{}]，参数：{}", clazz.getSimpleName(), method.getName(), Arrays.toString(params));
+        // Fixme:Livy对Arrays.ArrayList类的序列化会报空指针问题?
         /* 2020年6月9日 代理调用的方法只是将方法传递给Livy上执行同样的方法，所以可以直接将方法的参数类型直接传递给Livy上进行反射的方法 */
         Object obj = client.submit(new SparkLivyJob(target, method.getName(), method.getParameterTypes(), params));
 //        if (null != obj && obj.getClass() == clazz) {// 若返回值的类型跟被代理的类型式一样的，要使返回值也被代理起来

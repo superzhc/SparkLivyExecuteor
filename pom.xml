@@ -4,7 +4,7 @@
     <groupId>com.github.superzhc</groupId>
     <artifactId>SparkLivyExecuteor</artifactId>
     <packaging>jar</packaging>
-    <version>0.3.1</version>
+    <version>0.3.2</version>
     <name>SparkLivyExecuteor</name>
     <url>http://maven.apache.org</url>
 
@@ -81,6 +81,7 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-streaming_2.11</artifactId>
             <version>${spark.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Livy -->
@@ -104,6 +105,22 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
+
+            <!--用来构建超级JAR包的Maven shade 插件-->
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-shade-plugin</artifactId>-->
+                <!--<version>2.4.3</version>-->
+                <!--<executions>-->
+                    <!--<execution>-->
+                        <!--<phase>package</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>shade</goal>-->
+                        <!--</goals>-->
+                    <!--</execution>-->
+                <!--</executions>-->
+            <!--</plugin>-->
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>

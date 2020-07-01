@@ -1,6 +1,8 @@
 package com.github.superzhc.spark;
 
 import java.io.Serializable;
+import java.sql.Date;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -8,6 +10,8 @@ import java.util.Properties;
 
 import com.github.superzhc.livy.SparkLivyResultProxy;
 import com.github.superzhc.spark.udf.CodeItem;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
@@ -19,6 +23,7 @@ import com.github.superzhc.livy.SparkLivyLocal;
 import com.github.superzhc.utils.JacksonUtils;
 import com.github.superzhc.utils.JavaConversionsExt;
 
+import org.apache.spark.sql.types.DateType;
 import scala.Function1;
 import scala.collection.JavaConversions;
 
@@ -452,24 +457,135 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
     }
 
     //=========================自定义函数==============================
+    /**
+     * 列的类型转换，支持的类型有: `string`, `boolean`, `byte`, `short`, `int`, `long`, `float`, `double`, `decimal`, `date`, `timestamp`.
+     * @param column
+     * @param to
+     * @return
+     */
+//    public SparkDataFrame cast(String column, String to) {
+//        Dataset<Row> df = dataFrame();
+//        df = df.withColumn(column, df.col(column).cast(to));
+//
+//        SparkDataFrameMapping.getInstance().put(dfKey, df);// 类型转化，直接覆盖掉原来的就好了，不重新创建一个df
+//        return this;
+//    }
+    
+    /**
+     * 代码项
+     * @param column
+     * @param newColumn
+     * @param items
+     * @return
+     */
     public SparkDataFrame codeitem(String column, String newColumn, String items) {
         Dataset<Row> df = dataFrame();
+
+        // 2020年7月1日 将代码项设置成广播变量
+        Broadcast<String> broadcast=JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(items);
         
         // 继承UDF1~22的接口即可实现自定义函数的创建，简单的可类似如下的匿名函数的方式
-//        UDF1 udf1=new UDF1<String,String>()
-//        {
-//            @Override
-//            public String call(String s) throws Exception {
-//                String value = JacksonUtils.convert(items).getString(s);
-//                return null == value ? "" : value;
-//            }
-//        };
+        UDF1 udf1 = new UDF1<String, String>()
+        {
+            @Override
+            public String call(String s) throws Exception {
+                String value = JacksonUtils.convert(broadcast.getValue()).getString(s);
+                return null == value ? "" : value;
+            }
+        };
 
         // 自定义函数的使用
         String fun = "codeitem";
-        spark.udf().register(fun, new CodeItem(items), DataTypes.StringType);
+        // spark.udf().register(fun, new CodeItem(items), DataTypes.StringType);
+        spark.udf().register(fun, udf1, DataTypes.StringType);
         // df = df.selectExpr("*", "codeitem(" + column + ") as " + newColumn);
         df = df.withColumn(newColumn, org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 截取子字符串
+     * @param column
+     * @param newColumn
+     * @param start
+     * @param end
+     * @return
+     */
+    public SparkDataFrame substring(String column, String newColumn, int start, int end) {
+        Dataset<Row> df = dataFrame();
+
+        UDF1<String, String> udf1 = new UDF1<String, String>()
+        {
+            @Override
+            public String call(String s) throws Exception {
+                if (null == s || "".equals(s))
+                    return s;
+
+                int len = s.length();
+                if (len < start) {
+                    return null;
+                }
+                else {
+                    int e = len > end ? end : len; // 防止越界
+                    return s.substring(start, e);
+                }
+            }
+        };
+
+        String fun = "substring";
+        spark.udf().register(fun, udf1, DataTypes.StringType);
+        df = df.withColumn(newColumn, org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 时间列格式化成指定格式的字符串
+     * @param column
+     * @param newColumn
+     * @param pattern
+     * @return
+     */
+    public SparkDataFrame dateformat(String column, String newColumn, String pattern) {
+        Dataset<Row> df = dataFrame();
+        df = df.withColumn(newColumn, org.apache.spark.sql.functions.date_format(df.col(column), pattern));
+
+//        Broadcast<String> broadcast = JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(pattern);
+//        UDF1<Date, String> udf1 = new UDF1<Date, String>()
+//        {
+//            @Override
+//            public String call(Date date) throws Exception {
+//                if(null==date)
+//                    return null;
+//                return new SimpleDateFormat(broadcast.getValue()).format(date);
+//            }
+//        };
+//
+//        String fun = "dateformat";
+//        spark.udf().register(fun, udf1, DataTypes.StringType);
+//        df = df.withColumn(newColumn, org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 将字符串时间列格式化成指定格式的字符串
+     * @param column
+     * @param newColumn
+     * @param fromPattern
+     * @param toPattern
+     * @return
+     */
+    public SparkDataFrame strdateformat(String column, String newColumn, String fromPattern, String toPattern) {
+        Dataset<Row> df = dataFrame();
+        df = df.withColumn(newColumn,
+                org.apache.spark.sql.functions.date_format(
+                        org.apache.spark.sql.functions.unix_timestamp(df.col(column), fromPattern).cast("timestamp"),
+                        toPattern));
 
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
