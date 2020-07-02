@@ -1,30 +1,24 @@
 package com.github.superzhc.spark;
 
 import java.io.Serializable;
-import java.sql.Date;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import com.github.superzhc.livy.SparkLivyResultProxy;
-import com.github.superzhc.spark.udf.CodeItem;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.storage.StorageLevel;
 
 import com.github.superzhc.dataframe.SparkDataFrameMapping;
 import com.github.superzhc.livy.SparkLivyLocal;
+import com.github.superzhc.livy.SparkLivyResultProxy;
 import com.github.superzhc.utils.JacksonUtils;
-import com.github.superzhc.utils.JavaConversionsExt;
+import com.github.superzhc.utils.LivySerUtils;
 
-import org.apache.spark.sql.types.DateType;
-import scala.Function1;
 import scala.collection.JavaConversions;
 
 /**
@@ -348,10 +342,7 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
         // 直接使用此方法，返回数据在Livy序列化调用java.util.Arrays$ArrayList.size报空指针，不使用Arrays.asList来进行操作了
         // return SparkDataFrameMapping.getInstance().get(dfKey).collectAsList();
         Row[] rows = collect();
-        List<Row> lst = new ArrayList<>(rows.length);
-        for (Row row : rows) {
-            lst.add(row);
-        }
+        List<Row> lst = LivySerUtils.array2list(rows);
         return lst;
     }
 
@@ -373,10 +364,11 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
         // 直接使用此方法，返回数据在Livy序列化调用java.util.Arrays$ArrayList.size报空指针，不使用Arrays.asList来进行操作了
         // return SparkDataFrameMapping.getInstance().get(dfKey).takeAsList(n);
         Row[] rows = take(n);
-        List<Row> lst = new ArrayList<>(rows.length);
-        for (Row row : rows) {
-            lst.add(row);
-        }
+        // List<Row> lst = new ArrayList<>(rows.length);
+        // for (Row row : rows) {
+        // lst.add(row);
+        // }
+        List<Row> lst=LivySerUtils.array2list(rows);
         return lst;
     }
 
@@ -402,6 +394,39 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
     }
+
+    // region===========================持久化============================
+    public SparkDataFrame cache() {
+        Dataset<Row> df = dataFrame();
+        df.cache();
+        return this;
+    }
+
+    public SparkDataFrame persist(String storageLevel) {
+        Dataset<Row> df = dataFrame();
+        if (null == storageLevel || "".equals(storageLevel)) {
+            df.persist();
+        }
+        else {
+            df.persist(StorageLevel.fromString(storageLevel));
+        }
+        return this;
+    }
+
+    public SparkDataFrame unpersist() {
+        Dataset<Row> df = dataFrame();
+        df.unpersist();
+        return this;
+    }
+
+    public SparkDataFrame unpersist(boolean blocking) {
+        Dataset<Row> df = dataFrame();
+        df.unpersist(blocking);
+        return this;
+    }
+    // endregion========================持久化============================
+    
+    // region============================数据存储===========================
 
     public void saveJdbc(String url, String tableName, Properties props){
         saveJdbc(url,tableName,"error",props);
@@ -451,12 +476,14 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
         df.write().json(path);
     }
 
+    // endregion==========================数据存储===========================
+
     @SparkLivyLocal
     public String key() {
         return dfKey;
     }
 
-    //=========================自定义函数==============================
+    // region =========================自定义函数==============================
     /**
      * 列的类型转换，支持的类型有: `string`, `boolean`, `byte`, `short`, `int`, `long`, `float`, `double`, `decimal`, `date`, `timestamp`.
      * @param column
@@ -590,5 +617,5 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
     }
-    //=========================自定义函数==============================
+    // endregion =========================自定义函数==============================
 }
