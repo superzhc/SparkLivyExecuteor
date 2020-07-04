@@ -171,7 +171,7 @@ public class SparkLivyClient implements Closeable
             String sessionInfo = restClient.Session(sessionId).get();
             JacksonNode root = JacksonUtils.convert(sessionInfo);
             logger.debug("Spark Web UI:[{}]", root.getString("appInfo", "sparkUiUrl"));
-            logger.debug("Spark任务资源管理器的访问地址：[{}]", root.getString("appInfo", "driverLogUrl"));
+            logger.debug("Spark Cluster Manager's Log：[{}]", root.getString("appInfo", "driverLogUrl"));
         }
     }
 

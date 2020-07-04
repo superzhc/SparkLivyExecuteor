@@ -53,6 +53,35 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
     }
 
     /**
+     * 获取分区数
+     * @return
+     */
+    public int getNumPartitions(){
+        return dataFrame().rdd().getNumPartitions();
+    }
+
+    /**
+     * 重分区，直接设置分区数量
+     */
+    public SparkDataFrame repartition(int numPartitions) {
+        Dataset<Row> df = dataFrame().repartition(numPartitions);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 重分区，通过字段进行分区
+     * @param column
+     * @return
+     */
+    public SparkDataFrame repartition(String column) {
+        Dataset<Row> df = dataFrame();
+        df = df.repartition(df.col(column));
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
      * 以树的形式打印数据的结构信息
      */
     public String printSchema() {
@@ -425,7 +454,7 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
         return this;
     }
     // endregion========================持久化============================
-    
+
     // region============================数据存储===========================
 
     public void saveJdbc(String url, String tableName, Properties props){
@@ -497,7 +526,7 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
 //        SparkDataFrameMapping.getInstance().put(dfKey, df);// 类型转化，直接覆盖掉原来的就好了，不重新创建一个df
 //        return this;
 //    }
-    
+
     /**
      * 代码项
      * @param column
@@ -510,7 +539,7 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
 
         // 2020年7月1日 将代码项设置成广播变量
         Broadcast<String> broadcast=JavaSparkContext.fromSparkContext(spark.sparkContext()).broadcast(items);
-        
+
         // 继承UDF1~22的接口即可实现自定义函数的创建，简单的可类似如下的匿名函数的方式
         UDF1 udf1 = new UDF1<String, String>()
         {
