@@ -62,7 +62,7 @@ public class SparkLivyJob<T extends AbstractSparkSession> implements Job
 //        }
         method.setAccessible(true);
         System.out.println(
-                "调用类：" + target.getClass().getSimpleName() + "执行方法：" + methodName + ";执行参数：" + Arrays.toString(params));
+                "调用类：" + target.getClass().getSimpleName() + "执行方法：" + methodName + ";执行参数：" + Arrays.deepToString(params));
         return method.invoke(target, params);
     }
 

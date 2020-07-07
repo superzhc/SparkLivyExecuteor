@@ -1,13 +1,13 @@
 package com.github.superzhc.spark;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.RelationalGroupedDataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.DataTypes;
@@ -317,6 +317,86 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
     }
 
     /**
+     * 分组
+     * @param groupColumns  分组列
+     * @param exprs         聚合列
+     *                      {
+     *                          "x1":"count",
+     *                          "x2":"sum"    
+     *                      }
+     * @return
+     */
+    public SparkDataFrame groupBy(String[] groupColumns, Map<String, String> exprs) {
+        Dataset<Row> df = dataFrame();
+
+        RelationalGroupedDataset relationalGroupedDataset;
+        if (groupColumns.length == 1) {
+            relationalGroupedDataset = df.groupBy(groupColumns[0]);
+        }
+        else {
+            String[] remainGroupColumns = Arrays.copyOfRange(groupColumns, 1, groupColumns.length - 1);
+            relationalGroupedDataset = df.groupBy(groupColumns[0], remainGroupColumns);
+        }
+        df = relationalGroupedDataset.agg(exprs);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+//    public SparkDataFrame groupBy(String[] groupColumns, Map<String,String[]> aggExprs) {
+//        Dataset<Row> df = dataFrame();
+//
+//        RelationalGroupedDataset relationalGroupedDataset;
+//        if (groupColumns.length == 1) {
+//            relationalGroupedDataset = df.groupBy(groupColumns[0]);
+//        }
+//        else {
+//            String[] remainGroupColumns = Arrays.copyOfRange(groupColumns, 1, groupColumns.length - 1);
+//            relationalGroupedDataset = df.groupBy(groupColumns[0], remainGroupColumns);
+//        }
+//
+//        List<Column> lst = new LinkedList<>();
+//        if (aggExprs.containsKey("count")) {
+//            String[] count = aggExprs.get("count");
+//            for (int i = 0, len = count.length; i < len; i++) {
+//                lst.add(org.apache.spark.sql.functions.count(count[i]));
+//            }
+//        }
+//
+//        if(aggExprs.containsKey("max")) {
+//            String[] max=aggExprs.get("max");
+//            for (int i = 0, len = max.length; i < len; i++) {
+//                lst.add(org.apache.spark.sql.functions.max(max[i]));
+//            }
+//        }
+//
+//        if(aggExprs.containsKey("min")) {
+//            String[] min=aggExprs.get("min");
+//            for (int i = 0, len = min.length; i < len; i++) {
+//                lst.add(org.apache.spark.sql.functions.min(min[i]));
+//            }
+//        }
+//
+//        if(aggExprs.containsKey("avg")){
+//            String[] avg=aggExprs.get("avg");
+//            for (int i = 0, len = avg.length; i < len; i++) {
+//                lst.add(org.apache.spark.sql.functions.avg(avg[i]));
+//            }
+//        }
+//
+//        if(lst.size()==1){
+//            df=relationalGroupedDataset.agg(lst.get(0));
+//        }else{
+//            Column first=lst.get(0);
+//            lst.remove(0);
+//            Column[] remainColumns=new Column[lst.size()];
+//            df=relationalGroupedDataset.agg(first,lst.toArray(remainColumns));
+//        }
+//
+//        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+//        return create(dfKey, tableName);
+//    }
+
+    /**
      * 获取一个DataFrame中有另一个DataFrame中没有的记录
      * @param key
      * @param alias
@@ -474,6 +554,11 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
      */
     public void saveJdbc(String url, String tableName, String saveMode, Properties props) {
         Dataset<Row> df = dataFrame();
+//        if (!url.contains("rewriteBatchedStatements")) {// MySQL服务是否开启批次写入
+//            url += url.contains("?") ? "&" : "?";
+//            url += "rewriteBatchedStatements=true";
+//        }
+//        props.put("batchsize","10000");// 批次写入MySQL 的条数
         df.write().mode(saveMode).jdbc(url, tableName, props);
     }
 

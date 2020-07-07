@@ -28,6 +28,13 @@ public class SparkSQL extends AbstractSparkSession
         return jdbc(url, sql, new Properties());
     }
 
+    /**
+     * 读数据库
+     * @param url
+     * @param sql，该查询语句必须给查询语句加上别名，不然报错，如：(select * from test) as t1
+     * @param props
+     * @return
+     */
     public String jdbc(String url, String sql, Properties props) {
         /*
          * // 2020年6月4日 用户传递配置来实现分区的示例
