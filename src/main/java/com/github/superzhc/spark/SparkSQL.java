@@ -93,9 +93,10 @@ public class SparkSQL extends AbstractSparkSession
     public String jdbc4Partition(String url, String sql, String partitionColumn, Long lowerBound, Long upperBound,
             Integer numPartitions, Properties props) {
         props.put("partitionColumn", partitionColumn);// 分区列，列为整数类型和时间
-        props.put("lowerBound", lowerBound);// 下限
-        props.put("upperBound", upperBound);// 上限
-        props.put("numPartitions", numPartitions);// 分区数
+        // 2020年7月10日 fix bug：传入的属性都是String类型
+        props.put("lowerBound", null == lowerBound ? null : lowerBound.toString());// 下限
+        props.put("upperBound", null == upperBound ? null : upperBound.toString());// 上限
+        props.put("numPartitions", null == numPartitions ? 1 : numPartitions.toString());// 分区数
         return jdbc(url, sql, props);
     }
 
