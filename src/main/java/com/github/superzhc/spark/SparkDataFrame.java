@@ -491,6 +491,15 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
 
     /**
      * 获取指定字段的统计信息
+     * 示例：
+     * |summary|  age|
+     * +-------+-----+
+     * |  count|   30| 记录条数
+     * |   mean|19.73| 平均值
+     * | stddev|0.907| 样本标准差
+     * |    min|   18| 最小值
+     * |    max|   22| 最大值
+     * +-------+-----+
      * @param columns
      * @return
      */
@@ -503,6 +512,115 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
     }
+
+    // region===========================聚合============================
+
+    /**
+     * 获取列的最大值
+     * @param column
+     * @return
+     */
+    public Object max(String column) {
+        Dataset<Row> df = dataFrame();
+        df = df.select(org.apache.spark.sql.functions.max(column));
+        return df.head().get(0);
+    }
+
+    /**
+     * 获取列的最小值
+     * @param column
+     * @return
+     */
+    public Object min(String column) {
+        Dataset<Row> df = dataFrame();
+        df = df.select(org.apache.spark.sql.functions.min(column));
+        return df.head().get(0);
+    }
+
+    /**
+     * 获取列的平均值
+     * @param column
+     * @return
+     */
+    public Object avg(String column) {
+        Dataset<Row> df = dataFrame();
+        df = df.select(org.apache.spark.sql.functions.avg(column));
+        return df.head().get(0);
+    }
+
+    /**
+     * 获取列的总和
+     * @param column
+     * @return
+     */
+    public Object sum(String column) {
+        Dataset<Row> df = dataFrame();
+        df = df.select(org.apache.spark.sql.functions.sum(column));
+        return df.head().get(0);
+    }
+
+    /**
+     * 获取列不重复值的个数
+     * @param column
+     * @return
+     */
+    public Object countDistinct(String column) {
+        Dataset<Row> df = dataFrame();
+        df = df.select(org.apache.spark.sql.functions.countDistinct(column));
+        return df.head().get(0);
+    }
+
+    /**
+     * 聚合操作
+     * @param aggExprs 示例：
+     *                 {
+     *                  "age":"mean",
+     *                  "phone":"max" 
+     *                 }
+     * @return
+     */
+    public SparkDataFrame agg(Map<String, String> aggExprs) {
+        Dataset<Row> df = dataFrame();
+        df = df.agg(aggExprs);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+    // endregion========================聚合============================
+
+    // region===========================数据采样============================
+    public SparkDataFrame sample(Boolean withReplacement, Double fraction) {
+        Dataset<Row> df = dataFrame();
+        df = df.sample(withReplacement, fraction);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 随机采样
+     * @param withReplacement
+     * @param fraction 采样的比列
+     * @param seed 随机数种子
+     * @return
+     */
+    public SparkDataFrame sample(Boolean withReplacement, Double fraction, Long seed) {
+        Dataset<Row> df = dataFrame();
+        df = df.sample(withReplacement, fraction, seed);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    public List<Row> takeSample(Boolean withReplacement, int num) {
+        Dataset<Row> df = dataFrame();
+        List<Row> lst = df.toJavaRDD().takeSample(withReplacement, num);
+        return LivySerUtils.list(lst);
+    }
+
+    public List<Row> takeSample(Boolean withReplacement, Integer num, Long seed) {
+        Dataset<Row> df = dataFrame();
+        List<Row> lst = df.toJavaRDD().takeSample(withReplacement, num, seed);
+        return LivySerUtils.list(lst);
+    }
+    // endregion========================数据采样============================
 
     // region===========================持久化============================
     public SparkDataFrame cache() {
@@ -604,13 +722,45 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
      * @param to
      * @return
      */
-//    public SparkDataFrame cast(String column, String to) {
-//        Dataset<Row> df = dataFrame();
-//        df = df.withColumn(column, df.col(column).cast(to));
-//
-//        SparkDataFrameMapping.getInstance().put(dfKey, df);// 类型转化，直接覆盖掉原来的就好了，不重新创建一个df
-//        return this;
-//    }
+    public SparkDataFrame cast(String column, String to) {
+        Dataset<Row> df = dataFrame();
+        df = df.withColumn(column, df.col(column).cast(to));
+
+        SparkDataFrameMapping.getInstance().put(dfKey, df);// 类型转化，直接覆盖掉原来的就好了，不重新创建一个df
+        return this;
+    }
+
+    /**
+     * 对指定列填充统一的值
+     * 注：时间类型不可用
+     * @param value   统一的值
+     * @param columns 填充的列
+     * @return
+     */
+    public SparkDataFrame fillNa(String value, String... columns) {
+        Dataset<Row> df = dataFrame();
+        df = df.na().fill(value, columns);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 对指定的列填充空值
+     * @param map 列：值
+     *            {
+     *              "col1":"val1",
+     *              "col2":"val2",
+     *              ...
+     *              "colN":"valN"
+     *            }
+     * @return
+     */
+    public SparkDataFrame fillNa(Map<String, Object> map) {
+        Dataset<Row> df = dataFrame();
+        df = df.na().fill(map);
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
 
     /**
      * 代码项
@@ -654,9 +804,9 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
      * @param end
      * @return
      */
-    public SparkDataFrame substring(String column, String newColumn, int start, int end) {
+    public SparkDataFrame substring(String column, String newColumn, Integer start, Integer end) {
         Dataset<Row> df = dataFrame();
-
+        
         UDF1<String, String> udf1 = new UDF1<String, String>()
         {
             @Override
@@ -665,17 +815,137 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
                     return s;
 
                 int len = s.length();
-                if (len < start) {
+                if (null != start && len < start) {
                     return null;
                 }
                 else {
-                    int e = len > end ? end : len; // 防止越界
-                    return s.substring(start, e);
+                    int start1 = start == null ? 0 : start;
+                    int e = (null == end || len <= end) ? len : end; // 防止越界
+                    return s.substring(start1, e);
                 }
             }
         };
 
-        String fun = "substring";
+        String fun = "substring2";
+        spark.udf().register(fun, udf1, DataTypes.StringType);
+        df = df.withColumn(newColumn, org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 根据子字符串向前向后截取一定位置的字符串
+     * @param column
+     * @param newColumn
+     * @param substring
+     * @param front
+     * @param back
+     * @return
+     */
+    public SparkDataFrame substring(String column, String newColumn, String substring, Integer front, Integer back) {
+        Dataset<Row> df = dataFrame();
+
+        UDF1<String, String> udf1 = new UDF1<String, String>()
+        {
+            @Override
+            public String call(String s) throws Exception {
+                if (!s.contains(substring))
+                    return null;
+
+                int index = s.indexOf(substring);
+                int start = (index - front) < 0 ? 0 : index - front;
+                int end = (index + back) > s.length() ? s.length() : index + back;
+                return s.substring(start, end);
+            }
+        };
+
+        String fun = "substring3";
+        spark.udf().register(fun, udf1, DataTypes.StringType);
+        df = df.withColumn(newColumn, org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 列内容替换
+     * @param column
+     * @param newColumn
+     * @param oldSubstring
+     * @param newSubstring
+     * @return
+     */
+    public SparkDataFrame replace(String column,String newColumn,String oldSubstring,String newSubstring){
+        Dataset<Row> df = dataFrame();
+
+        UDF1<String, String> udf1 = new UDF1<String, String>()
+        {
+            @Override
+            public String call(String s) throws Exception {
+                if(null==s) return null;
+
+                return s.replaceAll(oldSubstring,newSubstring);
+            }
+        };
+
+        String fun = "replace";
+        spark.udf().register(fun, udf1, DataTypes.StringType);
+        df = df.withColumn(newColumn, org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 左填充
+     * @param column
+     * @param newColumn
+     * @param prefix
+     * @return
+     */
+    public SparkDataFrame lpad(String column,String newColumn,String prefix){
+        Dataset<Row> df = dataFrame();
+
+        UDF1<String, String> udf1 = new UDF1<String, String>()
+        {
+            @Override
+            public String call(String s) throws Exception {
+                if(null==s) return null;// 对null不进行填充
+
+                return prefix+s;
+            }
+        };
+
+        String fun = "lpad";
+        spark.udf().register(fun, udf1, DataTypes.StringType);
+        df = df.withColumn(newColumn, org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 右填充
+     * @param column
+     * @param newColumn
+     * @param suffix
+     * @return
+     */
+    public SparkDataFrame rpad(String column,String newColumn,String suffix){
+        Dataset<Row> df = dataFrame();
+
+        UDF1<String, String> udf1 = new UDF1<String, String>()
+        {
+            @Override
+            public String call(String s) throws Exception {
+                if(null==s) return null;// 对null不进行填充
+
+                return s+suffix;
+            }
+        };
+
+        String fun = "rpad";
         spark.udf().register(fun, udf1, DataTypes.StringType);
         df = df.withColumn(newColumn, org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
 
@@ -730,6 +1000,155 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
 
         String dfKey = SparkDataFrameMapping.getInstance().set(df);
         return create(dfKey, tableName);
+    }
+
+    /**
+     * 多个列进行合并成一列
+     * @param columns
+     * @param separator
+     * @param target
+     * @return
+     */
+    public SparkDataFrame concat(String[] columns, String separator, String target) {
+        Dataset<Row> df = dataFrame();
+
+        int colLength = columns.length;
+        Column[] cols = new Column[colLength];
+        for (int i = 0; i < colLength; i++)
+            cols[i] = df.col(columns[i]);
+
+        df = df.withColumn(target, org.apache.spark.sql.functions.concat_ws(separator, cols));
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 一列分割成多列
+     * @param column
+     * @param separator
+     * @param target
+     * @param remain
+     * @return
+     */
+    public SparkDataFrame split(String column, String separator, String[] target, boolean remain) {
+        Dataset<Row> df = dataFrame();
+
+        String splitColName = UUID.randomUUID().toString();
+        df = df.withColumn(splitColName, org.apache.spark.sql.functions.split(df.col(column), separator));
+        for (int i = 0, len = target.length; i < len; i++) {
+            if (i == len - 1 && remain) {
+                UDF1<String, String> udf1 = new UDF1<String, String>()
+                {
+                    @Override
+                    public String call(String s) throws Exception {
+                        if (null == s)
+                            return null;
+
+                        String[] ss = s.split(separator);
+                        if (null != ss && ss.length >= len) {
+                            StringBuilder sb = new StringBuilder();
+                            for (int j = len - 1; j < ss.length; j++) {
+                                sb.append(separator).append(ss[j]);
+                            }
+                            return sb.substring(1);
+                        }
+                        return null;
+                    }
+                };
+                String fun = "splitColumn";
+                spark.udf().register(fun, udf1, DataTypes.StringType);
+                df = df.withColumn(target[i], org.apache.spark.sql.functions.callUDF(fun, df.col(column)));
+            }
+            else {
+                df = df.withColumn(target[i], df.col(splitColName).getItem(i));
+            }
+        }
+
+        df = df.drop(splitColName);// 删除内容进行分割的列
+
+        String dfKey = SparkDataFrameMapping.getInstance().set(df);
+        return create(dfKey, tableName);
+    }
+
+    /**
+     * 列的维度下数据的占比
+     * @param column
+     * @param otherColumns
+     * @return
+     */
+    public String columnsValueRatio(String column,String... otherColumns){
+        Dataset<Row> df = dataFrame();
+        // 获取数据总的条数
+        long count = df.count();
+
+        Dataset<Row> df2 = df.groupBy(column, otherColumns).count();
+        String[] columns = df2.columns();
+        Row[] rows = (Row[]) df2.collect();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        for (Row row : rows) {
+            sb.append("{");
+            StringBuilder sb2 = new StringBuilder("");
+            for (String item : columns) {
+                sb2.append(",");
+                if ("count".equals(item)) {
+                    sb2.append("\"ration\":" + ((Long) row.getAs(item)) * 0.1 / count);
+                }
+                else {
+                    sb2.append("\"" + item + "\":\"" + row.getAs(item) + "\"");
+                }
+            }
+            sb.append(sb2.length() > 0 ? sb2.substring(1) : "");
+            sb.append("},");
+        }
+        String result = sb.substring(0, sb.length() - 1) + "]";
+        return result;
+    }
+
+    /**
+     * 计算指定条件下数据的占比
+     * @param condition
+     * @return
+     */
+    public double percentage(String condition) {
+        Dataset<Row> df = dataFrame();
+        // 获取总数
+        long count = df.count();
+
+        // 获取某个条件下数据的总数
+        long partCount = df.where(condition).count();
+
+        return partCount * 1.0 / count;
+    }
+
+    /**
+     * 数值层级
+     * @param column
+     * @param level
+     * @return
+     */
+    public String NumberLevel(String column, Integer level) {
+        Dataset<Row> df = dataFrame();
+        // 获取的总数
+        long count = df.count();
+
+        // 对数值列进行排序
+        df = df.orderBy(column);
+
+        long segment = count / level;
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        Double percent = (1.0 / level);
+        for (int i = 0; i <= level; i++) {
+            Double proportion = percent * i;
+            Object value = df.limit((int) Math.round(proportion * count))
+                    .select(org.apache.spark.sql.functions.last(column)).first().get(0);
+            sb.append("\"" + (Math.round(proportion * 100)) + "%\"").append(":").append("\"" + value + "\"")
+                    .append(",");
+        }
+        String result = sb.substring(0, sb.length() - 1) + "}";
+        return result;
     }
     // endregion =========================自定义函数==============================
 }
