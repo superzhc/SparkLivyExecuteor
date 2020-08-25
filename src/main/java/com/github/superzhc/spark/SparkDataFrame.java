@@ -3,6 +3,8 @@ package com.github.superzhc.spark;
 import java.io.Serializable;
 import java.util.*;
 
+import com.github.superzhc.rdd.SparkRDDMapping;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.sql.Column;
@@ -50,6 +52,13 @@ public class SparkDataFrame extends AbstractSparkSession implements Serializable
      */
     private SparkDataFrame create(String dfKey,String tableName) {
         return new SparkDataFrame(dfKey, tableName);
+    }
+
+    public SparkRDD<Row> rdd(){
+        Dataset<Row> df=dataFrame();
+        JavaRDD<Row> javaRDD=df.toJavaRDD();
+        String key=SparkRDDMapping.getInstance().set(javaRDD);
+        return new SparkRDD<Row>(key);
     }
 
     /**
